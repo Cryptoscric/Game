@@ -2,12 +2,12 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8" />
-<title>Wonder Boxer</title>
+<title>Wonder Boxer Deluxe</title>
 
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #222;
+    background: #111;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -18,8 +18,8 @@
 
   #game-container {
     position: relative;
-    width: 800px;
-    height: 400px;
+    width: 900px;
+    height: 450px;
     overflow: hidden;
     border: 3px solid #fff;
     background: linear-gradient(#87ceeb 0%, #87ceeb 60%, #3b2f1b 60%, #3b2f1b 100%);
@@ -27,7 +27,7 @@
 
   #level {
     position: relative;
-    width: 1600px;
+    width: 2400px;
     height: 100%;
   }
 
@@ -35,47 +35,50 @@
     position: absolute;
     left: 0;
     bottom: 0;
-    width: 1600px;
-    height: 80px;
+    width: 2400px;
+    height: 90px;
     background: #4b3a22;
   }
 
   .platform {
     position: absolute;
-    width: 120px;
-    height: 20px;
+    width: 140px;
+    height: 22px;
     background: #6b4b2a;
     border-radius: 4px;
   }
 
+  /* Giocatore: usa direttamente boxer.png */
   #player {
     position: absolute;
-    width: 48px;
-    height: 72px;
+    width: 64px;
+    height: 96px;
     left: 100px;
-    bottom: 80px;
+    bottom: 90px;
 
-    /* Sostituisci con la tua immagine */
-    background: #ff4b7a;
-    border: 2px solid #fff;
-    border-radius: 8px;
-
-    /* Esempio sprite:
     background-image: url("boxer.png");
     background-size: cover;
     background-position: center;
     border: none;
     border-radius: 0;
-    */
+    overflow: hidden;
+    transform-origin: center;
   }
 
-  .enemy {
+  .enemy, .boss {
     position: absolute;
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     background: #000;
     border-radius: 50%;
-    bottom: 80px;
+    bottom: 90px;
+  }
+
+  .boss {
+    width: 80px;
+    height: 80px;
+    background: #550000;
+    border: 3px solid #ff0000;
   }
 
   .coin {
@@ -85,6 +88,16 @@
     background: gold;
     border-radius: 50%;
     border: 2px solid #fff;
+  }
+
+  .powerup {
+    position: absolute;
+    width: 40px;
+    height: 20px;
+    background: #00e0ff;
+    border-radius: 10px;
+    border: 2px solid #fff;
+    bottom: 100px;
   }
 
   #hud {
@@ -102,34 +115,86 @@
     font-size: 14px;
     text-shadow: 1px 1px 2px #000;
   }
+
+  #boss-hp {
+    position: absolute;
+    top: 30px;
+    right: 8px;
+    font-size: 14px;
+    text-shadow: 1px 1px 2px #000;
+  }
+
+  #controls {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 12px;
+    text-shadow: 1px 1px 2px #000;
+  }
+
+  #music-toggle {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border: 1px solid #fff;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.4);
+  }
 </style>
 </head>
 
 <body>
 <div id="game-container">
-  <div id="hud">Monete raccolte: 0</div>
+  <div id="hud">Monete: 0</div>
   <div id="lives">Vite: ❤️❤️❤️</div>
+  <div id="boss-hp">Boss: --</div>
+  <div id="controls">← → muovi • SPAZIO salta • X colpisci</div>
+  <div id="music-toggle">Musica: ON</div>
 
   <div id="level">
-
     <div class="ground"></div>
 
+    <!-- Giocatore -->
     <div id="player"></div>
 
     <!-- Piattaforme -->
-    <div class="platform" style="left: 260px; bottom: 160px;"></div>
-    <div class="platform" style="left: 430px; bottom: 220px;"></div>
-    <div class="platform" style="left: 600px; bottom: 160px;"></div>
+    <div class="platform" style="left: 260px; bottom: 190px;"></div>
+    <div class="platform" style="left: 460px; bottom: 250px;"></div>
+    <div class="platform" style="left: 700px; bottom: 190px;"></div>
+    <div class="platform" style="left: 950px; bottom: 230px;"></div>
+    <div class="platform" style="left: 1200px; bottom: 200px;"></div>
+    <div class="platform" style="left: 1500px; bottom: 260px;"></div>
+    <div class="platform" style="left: 1800px; bottom: 220px;"></div>
 
-    <!-- Nemico -->
-    <div class="enemy" id="enemy1" style="left: 500px;"></div>
+    <!-- Nemico semplice -->
+    <div class="enemy" id="enemy1" style="left: 600px;"></div>
+
+    <!-- Power-up skateboard -->
+    <div class="powerup" id="skate" style="left: 850px;"></div>
 
     <!-- Monete -->
-    <div class="coin" style="left: 300px; bottom: 180px;"></div>
-    <div class="coin" style="left: 460px; bottom: 240px;"></div>
-    <div class="coin" style="left: 620px; bottom: 180px;"></div>
+    <div class="coin" style="left: 300px; bottom: 210px;"></div>
+    <div class="coin" style="left: 480px; bottom: 270px;"></div>
+    <div class="coin" style="left: 730px; bottom: 210px;"></div>
+    <div class="coin" style="left: 980px; bottom: 250px;"></div>
+    <div class="coin" style="left: 1250px; bottom: 220px;"></div>
+    <div class="coin" style="left: 1550px; bottom: 280px;"></div>
+    <div class="coin" style="left: 1850px; bottom: 240px;"></div>
+    <div class="coin" style="left: 2100px; bottom: 200px;"></div>
 
+    <!-- Boss finale -->
+    <div class="boss" id="boss" style="left: 2150px;"></div>
   </div>
+
+  <!-- Musica 8-bit (metti un tuo file .mp3/.ogg) -->
+  <audio id="bg-music" loop>
+    <!-- Sostituisci src con un tuo file locale, es:
+    <source src="8bit_theme.ogg" type="audio/ogg">
+    -->
+  </audio>
 </div>
 
 <script>
@@ -137,30 +202,48 @@
   const level = document.getElementById("level");
   const player = document.getElementById("player");
   const enemy1 = document.getElementById("enemy1");
+  const boss = document.getElementById("boss");
   const platforms = Array.from(document.getElementsByClassName("platform"));
   const coins = Array.from(document.getElementsByClassName("coin"));
+  const powerupSkate = document.getElementById("skate");
+  const hud = document.getElementById("hud");
+  const livesLabel = document.getElementById("lives");
+  const bossHpLabel = document.getElementById("boss-hp");
+  const musicToggle = document.getElementById("music-toggle");
+  const bgMusic = document.getElementById("bg-music");
 
   const gravity = 0.6;
-  const moveSpeed = 3.2;
+  let baseMoveSpeed = 3.2;
+  let moveSpeed = baseMoveSpeed;
   const jumpStrength = 11;
 
   let playerX = 100;
-  let playerY = 80;
+  let playerY = 90;
   let velX = 0;
   let velY = 0;
   let onGround = false;
+  let facing = 1; // 1 destra, -1 sinistra
 
   let score = 0;
   let lives = 3;
 
-  let keys = { left: false, right: false, jump: false };
+  // Boss
+  let bossHP = 10;
+  bossHpLabel.textContent = "Boss: " + bossHP;
 
   // Nemico
-  let enemyX = 500;
+  let enemyX = 600;
   let enemyDir = -1;
   const enemySpeed = 1.5;
-  const enemyMinX = 450;
-  const enemyMaxX = 650;
+  const enemyMinX = 550;
+  const enemyMaxX = 750;
+
+  // Power-up
+  let hasSkate = false;
+  let skateTimer = 0; // in frame
+
+  // Input
+  let keys = { left: false, right: false, jump: false, attack: false };
 
   function rectsOverlap(a, b) {
     return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
@@ -181,8 +264,8 @@
 
   function updatePlayer() {
     velX = 0;
-    if (keys.left) velX = -moveSpeed;
-    if (keys.right) velX = moveSpeed;
+    if (keys.left) { velX = -moveSpeed; facing = -1; }
+    if (keys.right) { velX = moveSpeed; facing = 1; }
 
     if (keys.jump && onGround) {
       velY = jumpStrength;
@@ -198,12 +281,14 @@
     if (playerX > level.clientWidth - player.clientWidth)
       playerX = level.clientWidth - player.clientWidth;
 
-    const groundY = 80;
+    const groundY = 90;
     if (playerY <= groundY) {
       playerY = groundY;
       velY = 0;
       onGround = true;
-    } else onGround = false;
+    } else {
+      onGround = false;
+    }
 
     const playerRect = {
       left: playerX,
@@ -228,6 +313,9 @@
 
     player.style.left = playerX + "px";
     player.style.bottom = playerY + "px";
+
+    // Flip orizzontale
+    player.style.transform = facing === -1 ? "scaleX(-1)" : "scaleX(1)";
   }
 
   function updateEnemy() {
@@ -240,7 +328,9 @@
     const pRect = getRect(player);
     const eRect = getRect(enemy1);
 
-    if (rectsOverlap(pRect, eRect)) loseLife();
+    if (rectsOverlap(pRect, eRect)) {
+      loseLife();
+    }
   }
 
   function updateCoins() {
@@ -251,21 +341,129 @@
         coin.remove();
         coins.splice(index, 1);
         score++;
-        document.getElementById("hud").textContent = `Monete raccolte: ${score}`;
+        hud.textContent = `Monete: ${score}`;
       }
     });
   }
 
+  function updatePowerup() {
+    if (!powerupSkate) return;
+    const pRect = getRect(player);
+    const sRect = getRect(powerupSkate);
+    if (rectsOverlap(pRect, sRect)) {
+      powerupSkate.remove();
+      hasSkate = true;
+      skateTimer = 60 * 10; // ~10 secondi a 60fps
+      moveSpeed = baseMoveSpeed * 1.8;
+      player.style.boxShadow = "0 0 12px #00e0ff";
+    }
+
+    if (hasSkate) {
+      skateTimer--;
+      if (skateTimer <= 0) {
+        hasSkate = false;
+        moveSpeed = baseMoveSpeed;
+        player.style.boxShadow = "none";
+      }
+    }
+  }
+
+  function updateBoss() {
+    const pRect = getRect(player);
+    const bRect = getRect(boss);
+
+    // Se il giocatore tocca il boss senza attacco
+    if (rectsOverlap(pRect, bRect) && !keys.attack && boss.style.display !== "none") {
+      loseLife();
+    }
+
+    // Attacco: se X premuto e vicino al boss, togli HP
+    if (keys.attack && rectsOverlap(pRect, bRect) && bossHP > 0) {
+      bossHP--;
+      if (bossHP < 0) bossHP = 0;
+      bossHpLabel.textContent = "Boss: " + bossHP;
+      // piccolo knockback
+      playerX -= facing * 10;
+      if (bossHP === 0) {
+        boss.style.display = "none";
+        bossHpLabel.textContent = "Boss: KO!";
+        alert("Hai sconfitto il boss! 🎉");
+      }
+    }
+  }
+
   function loseLife() {
     lives--;
-    document.getElementById("lives").textContent = `Vite: ${"❤️".repeat(lives)}`;
+    if (lives < 0) lives = 0;
+    livesLabel.textContent = `Vite: ${"❤️".repeat(lives)}`;
 
     if (lives <= 0) {
       alert("Game Over!");
       lives = 3;
       score = 0;
-      document.getElementById("lives").textContent = "Vite: ❤️❤️❤️";
-      document.getElementById("hud").textContent = "Monete raccolte: 0";
+      bossHP = 10;
+      boss.style.display = "block";
+      livesLabel.textContent = "Vite: ❤️❤️❤️";
+      hud.textContent = "Monete: 0";
+      bossHpLabel.textContent = "Boss: " + bossHP;
     }
 
+    playerX = 100;
+    playerY = 90;
+    velX = 0;
+    velY = 0;
+  }
+
+  function scrollToPlayer() {
+    container.scrollLeft = playerX - container.clientWidth / 2;
+    if (container.scrollLeft < 0) container.scrollLeft = 0;
+    if (container.scrollLeft > level.clientWidth - container.clientWidth)
+      container.scrollLeft = level.clientWidth - container.clientWidth;
+  }
+
+  function gameLoop() {
+    updatePlayer();
+    updateEnemy();
+    updateCoins();
+    updatePowerup();
+    updateBoss();
+    scrollToPlayer();
+    requestAnimationFrame(gameLoop);
+  }
+
+  window.addEventListener("keydown", e => {
+    if (e.code === "ArrowLeft") keys.left = true;
+    if (e.code === "ArrowRight") keys.right = true;
+    if (e.code === "Space") keys.jump = true;
+    if (e.code === "KeyX") keys.attack = true;
+  });
+
+  window.addEventListener("keyup", e => {
+    if (e.code === "ArrowLeft") keys.left = false;
+    if (e.code === "ArrowRight") keys.right = false;
+    if (e.code === "Space") keys.jump = false;
+    if (e.code === "KeyX") keys.attack = false;
+  });
+
+  // Musica toggle
+  let musicOn = true;
+  musicToggle.addEventListener("click", () => {
+    musicOn = !musicOn;
+    musicToggle.textContent = "Musica: " + (musicOn ? "ON" : "OFF");
+    if (musicOn) {
+      bgMusic.play().catch(() => {});
+    } else {
+      bgMusic.pause();
+    }
+  });
+
+  // Avvio musica se possibile dopo interazione
+  container.addEventListener("click", () => {
+    if (musicOn) bgMusic.play().catch(() => {});
+  }, { once: true });
+
+  gameLoop();
+</script>
+</body>
+</html>
    
