@@ -48,21 +48,21 @@
     border-radius: 4px;
   }
 
-  /* Giocatore: usa direttamente boxer.png */
+  /* PLAYER — versione corretta */
   #player {
     position: absolute;
-    width: 64px;
-    height: 96px;
+    width: 80px;
+    height: 110px;
     left: 100px;
     bottom: 90px;
 
     background-image: url("boxer.png");
-    background-size: cover;
+    background-size: contain;
+    background-repeat: no-repeat;
     background-position: center;
-    border: none;
-    border-radius: 0;
-    overflow: hidden;
+
     transform-origin: center;
+    z-index: 10;
   }
 
   .enemy, .boss {
@@ -100,47 +100,19 @@
     bottom: 100px;
   }
 
-  #hud {
+  #hud, #lives, #boss-hp, #controls, #music-toggle {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    font-size: 14px;
     text-shadow: 1px 1px 2px #000;
   }
 
-  #lives {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 14px;
-    text-shadow: 1px 1px 2px #000;
-  }
-
-  #boss-hp {
-    position: absolute;
-    top: 30px;
-    right: 8px;
-    font-size: 14px;
-    text-shadow: 1px 1px 2px #000;
-  }
-
-  #controls {
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    font-size: 12px;
-    text-shadow: 1px 1px 2px #000;
-  }
-
+  #hud { top: 8px; left: 8px; }
+  #lives { top: 8px; right: 8px; }
+  #boss-hp { top: 30px; right: 8px; }
+  #controls { bottom: 8px; left: 8px; font-size: 12px; }
   #music-toggle {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    font-size: 12px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border: 1px solid #fff;
-    border-radius: 4px;
+    bottom: 8px; right: 8px; font-size: 12px;
+    cursor: pointer; padding: 4px 8px;
+    border: 1px solid #fff; border-radius: 4px;
     background: rgba(0,0,0,0.4);
   }
 </style>
@@ -157,10 +129,10 @@
   <div id="level">
     <div class="ground"></div>
 
-    <!-- Giocatore -->
+    <!-- PLAYER -->
     <div id="player"></div>
 
-    <!-- Piattaforme -->
+    <!-- PIATTAFORME -->
     <div class="platform" style="left: 260px; bottom: 190px;"></div>
     <div class="platform" style="left: 460px; bottom: 250px;"></div>
     <div class="platform" style="left: 700px; bottom: 190px;"></div>
@@ -169,13 +141,13 @@
     <div class="platform" style="left: 1500px; bottom: 260px;"></div>
     <div class="platform" style="left: 1800px; bottom: 220px;"></div>
 
-    <!-- Nemico semplice -->
+    <!-- NEMICO -->
     <div class="enemy" id="enemy1" style="left: 600px;"></div>
 
-    <!-- Power-up skateboard -->
+    <!-- POWER-UP -->
     <div class="powerup" id="skate" style="left: 850px;"></div>
 
-    <!-- Monete -->
+    <!-- MONETE -->
     <div class="coin" style="left: 300px; bottom: 210px;"></div>
     <div class="coin" style="left: 480px; bottom: 270px;"></div>
     <div class="coin" style="left: 730px; bottom: 210px;"></div>
@@ -185,16 +157,11 @@
     <div class="coin" style="left: 1850px; bottom: 240px;"></div>
     <div class="coin" style="left: 2100px; bottom: 200px;"></div>
 
-    <!-- Boss finale -->
+    <!-- BOSS -->
     <div class="boss" id="boss" style="left: 2150px;"></div>
   </div>
 
-  <!-- Musica 8-bit (metti un tuo file .mp3/.ogg) -->
-  <audio id="bg-music" loop>
-    <!-- Sostituisci src con un tuo file locale, es:
-    <source src="8bit_theme.ogg" type="audio/ogg">
-    -->
-  </audio>
+  <audio id="bg-music" loop></audio>
 </div>
 
 <script>
@@ -222,27 +189,23 @@
   let velX = 0;
   let velY = 0;
   let onGround = false;
-  let facing = 1; // 1 destra, -1 sinistra
+  let facing = 1;
 
   let score = 0;
   let lives = 3;
 
-  // Boss
   let bossHP = 10;
   bossHpLabel.textContent = "Boss: " + bossHP;
 
-  // Nemico
   let enemyX = 600;
   let enemyDir = -1;
   const enemySpeed = 1.5;
   const enemyMinX = 550;
   const enemyMaxX = 750;
 
-  // Power-up
   let hasSkate = false;
-  let skateTimer = 0; // in frame
+  let skateTimer = 0;
 
-  // Input
   let keys = { left: false, right: false, jump: false, attack: false };
 
   function rectsOverlap(a, b) {
@@ -314,7 +277,6 @@
     player.style.left = playerX + "px";
     player.style.bottom = playerY + "px";
 
-    // Flip orizzontale
     player.style.transform = facing === -1 ? "scaleX(-1)" : "scaleX(1)";
   }
 
@@ -353,7 +315,7 @@
     if (rectsOverlap(pRect, sRect)) {
       powerupSkate.remove();
       hasSkate = true;
-      skateTimer = 60 * 10; // ~10 secondi a 60fps
+      skateTimer = 60 * 10;
       moveSpeed = baseMoveSpeed * 1.8;
       player.style.boxShadow = "0 0 12px #00e0ff";
     }
@@ -372,17 +334,14 @@
     const pRect = getRect(player);
     const bRect = getRect(boss);
 
-    // Se il giocatore tocca il boss senza attacco
     if (rectsOverlap(pRect, bRect) && !keys.attack && boss.style.display !== "none") {
       loseLife();
     }
 
-    // Attacco: se X premuto e vicino al boss, togli HP
     if (keys.attack && rectsOverlap(pRect, bRect) && bossHP > 0) {
       bossHP--;
       if (bossHP < 0) bossHP = 0;
       bossHpLabel.textContent = "Boss: " + bossHP;
-      // piccolo knockback
       playerX -= facing * 10;
       if (bossHP === 0) {
         boss.style.display = "none";
@@ -445,7 +404,6 @@
     if (e.code === "KeyX") keys.attack = false;
   });
 
-  // Musica toggle
   let musicOn = true;
   musicToggle.addEventListener("click", () => {
     musicOn = !musicOn;
@@ -457,7 +415,6 @@
     }
   });
 
-  // Avvio musica se possibile dopo interazione
   container.addEventListener("click", () => {
     if (musicOn) bgMusic.play().catch(() => {});
   }, { once: true });
@@ -466,4 +423,3 @@
 </script>
 </body>
 </html>
-   
