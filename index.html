@@ -1,1 +1,269 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini Wonder Girl Boxer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
+    body {
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+      color: #fff;
+    }
+
+    #game-container {
+      position: relative;
+      width: 800px;
+      height: 400px;
+      background: linear-gradient(#87ceeb 0%, #87ceeb 60%, #3b2f1b 60%, #3b2f1b 100%);
+      overflow: hidden;
+      border: 3px solid #fff;
+    }
+
+    /* Terreno */
+    .ground {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 80px;
+      background: #4b3a22;
+    }
+
+    /* Piattaforme */
+    .platform {
+      position: absolute;
+      width: 120px;
+      height: 20px;
+      background: #6b4b2a;
+      border-radius: 4px;
+    }
+
+    /* Giocatore */
+    #player {
+      position: absolute;
+      width: 48px;
+      height: 72px;
+      left: 100px;
+      bottom: 80px;
+      /* Sostituisci questo con la tua immagine */
+      background: #ff4b7a;
+      border-radius: 8px;
+      border: 2px solid #fff;
+      /* Esempio per usare l’immagine:
+         background-image: url("boxer.png");
+         background-size: cover;
+         background-position: center;
+      */
+    }
+
+    /* Nemico semplice */
+    .enemy {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: #000;
+      border-radius: 50%;
+      bottom: 80px;
+    }
+
+    #hud {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 14px;
+      text-shadow: 1px 1px 2px #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="hud">Freccia sinistra/destra per muoverti – Spazio per saltare</div>
+    <div class="ground"></div>
+    <div id="player"></div>
+
+    <!-- Piattaforme stile Wonder Boy -->
+    <div class="platform" style="left: 260px; bottom: 160px;"></div>
+    <div class="platform" style="left: 430px; bottom: 220px;"></div>
+    <div class="platform" style="left: 600px; bottom: 160px;"></div>
+
+    <!-- Nemico che cammina -->
+    <div class="enemy" id="enemy1" style="left: 500px;"></div>
+  </div>
+
+  <script>
+    const container = document.getElementById("game-container");
+    const player = document.getElementById("player");
+    const enemy1 = document.getElementById("enemy1");
+    const platforms = Array.from(document.getElementsByClassName("platform"));
+
+    const gravity = 0.6;
+    const moveSpeed = 3.2;
+    const jumpStrength = 11;
+
+    let playerX = 100;
+    let playerY = 80; // distanza dal “terreno”
+    let velX = 0;
+    let velY = 0;
+    let onGround = false;
+
+    let keys = {
+      left: false,
+      right: false,
+      jump: false
+    };
+
+    // Nemico semplice che si muove avanti e indietro
+    let enemyX = 500;
+    let enemyDir = -1;
+    const enemySpeed = 1.5;
+    const enemyMinX = 450;
+    const enemyMaxX = 650;
+
+    function rectsOverlap(a, b) {
+      return !(
+        a.right < b.left ||
+        a.left > b.right ||
+        a.bottom < b.top ||
+        a.top > b.bottom
+      );
+    }
+
+    function getRect(el) {
+      const r = el.getBoundingClientRect();
+      const c = container.getBoundingClientRect();
+      return {
+        left: r.left - c.left,
+        right: r.right - c.left,
+        top: r.top - c.top,
+        bottom: r.bottom - c.top,
+        width: r.width,
+        height: r.height
+      };
+    }
+
+    function updatePlayer() {
+      // Input orizzontale
+      velX = 0;
+      if (keys.left) velX = -moveSpeed;
+      if (keys.right) velX = moveSpeed;
+
+      // Salto
+      if (keys.jump && onGround) {
+        velY = jumpStrength;
+        onGround = false;
+      }
+
+      // Gravità
+      velY -= gravity;
+
+      // Aggiorna posizione
+      playerX += velX;
+      playerY += velY;
+
+      // Limiti orizzontali
+      if (playerX < 0) playerX = 0;
+      if (playerX > container.clientWidth - player.clientWidth) {
+        playerX = container.clientWidth - player.clientWidth;
+      }
+
+      // Collisione con terreno
+      const groundY = 80; // altezza terreno
+      if (playerY <= groundY) {
+        playerY = groundY;
+        velY = 0;
+        onGround = true;
+      } else {
+        onGround = false;
+      }
+
+      // Collisione con piattaforme (solo dall’alto)
+      const playerRect = {
+        left: playerX,
+        right: playerX + player.clientWidth,
+        top: container.clientHeight - (playerY + player.clientHeight),
+        bottom: container.clientHeight - playerY
+      };
+
+      platforms.forEach(p => {
+        const pr = getRect(p);
+        const platRect = {
+          left: pr.left,
+          right: pr.right,
+          top: pr.top,
+          bottom: pr.bottom
+        };
+
+        // Se il giocatore sta cadendo e tocca la parte superiore della piattaforma
+        if (rectsOverlap(playerRect, platRect) && velY < 0) {
+          // Controllo che arrivi dall’alto
+          const playerBottomPrev = playerRect.bottom - velY;
+          if (playerBottomPrev <= platRect.top + 5) {
+            playerY = container.clientHeight - platRect.top - player.clientHeight;
+            velY = 0;
+            onGround = true;
+          }
+        }
+      });
+
+      // Applica al DOM
+      player.style.left = playerX + "px";
+      player.style.bottom = playerY + "px";
+    }
+
+    function updateEnemy() {
+      enemyX += enemyDir * enemySpeed;
+      if (enemyX < enemyMinX) {
+        enemyX = enemyMinX;
+        enemyDir = 1;
+      } else if (enemyX > enemyMaxX) {
+        enemyX = enemyMaxX;
+        enemyDir = -1;
+      }
+      enemy1.style.left = enemyX + "px";
+
+      // Collisione con il giocatore
+      const pRect = getRect(player);
+      const eRect = getRect(enemy1);
+      if (rectsOverlap(pRect, eRect)) {
+        // Reset semplice
+        playerX = 100;
+        playerY = 80;
+        velX = 0;
+        velY = 0;
+        alert("Colpita! Riprova!");
+      }
+    }
+
+    function gameLoop() {
+      updatePlayer();
+      updateEnemy();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Input tastiera
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "ArrowLeft") keys.left = true;
+      if (e.code === "ArrowRight") keys.right = true;
+      if (e.code === "Space") keys.jump = true;
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.code === "ArrowLeft") keys.left = false;
+      if (e.code === "ArrowRight") keys.right = false;
+      if (e.code === "Space") keys.jump = false;
+    });
+
+    gameLoop();
+  </script>
+</body>
+</html>
